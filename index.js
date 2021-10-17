@@ -19,17 +19,23 @@ const getFilename = require('./functions/getfilename');
         let { scrf } = await getScrfToken(url)
 
         // получаем ссылку для скачивания файла
-        let fileurl = await getDownloadPath(url, scrf )
+        let fileurl = await getDownloadPath(url, scrf)
 
         // отправляем запрос на скачивание
         let res = await needle.get(fileurl)
 
         // получаем название файла и записываем по выбранному пути
-        let {pathname} = parse(res.request.path)
+        let { pathname } = parse(res.request.path)
         let filename = await getFilename(pathname)
-        res.pipe(fs.createWriteStream(path.join(folder, filename)))
-        
-        console.log(`File has been download to ${path.join(folder, filename)}`)
+        let out = res.pipe(fs.createWriteStream(path.join(folder, filename)))
+
+        out.on("error", (err) => {
+                console.log("----writing file closed with error", err)
+            })
+            .on("finish", () => {
+                console.log(`File has been download to ${path.join(folder, filename)}`)
+            })
+
     } catch (error) {
         console.error(error)
     }
